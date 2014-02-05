@@ -27,20 +27,6 @@ leway_percentage = .05
 
 debug = False
 
-## dual monitor setup
-
-xleft = 1920
-yleft = 1080
-xright = 1920
-yright = 1080
-zero_xleft = 0
-zero_yleft = 0
-
-zero_xright = xleft
-zero_yright = 400
-halfpoints = [0, xleft/2, xleft, xleft+xright/2]
-
-
 def getMonitorConfig():
     """ 
     Returns ordered list of Monitor configuration as dict.
@@ -60,10 +46,6 @@ def getMonitorConfig():
             m[k] = int(m[k])
     mon.sort(key=lambda x:  x['pos_x']  )
     return mon
-
-
-
-
 
 def initialize():
     """
@@ -127,6 +109,26 @@ monitors = getMonitorConfig()
 max_width = int(max_width)
 max_height = int(max_height)
 
+if debug:
+    print {'junk': junk, 'max_width': max_width, 'max_height': max_height, 
+           'cX': cX, 'cY': cY, 'cW': cW, 'cH': cH, 'cMh': cMh, 'cMv': cMv}
+    print monitors
+def get_current_monitor():
+    """
+    Determines monitor of current window
+    """
+    cMonId = 0
+    for i in reversed(range(len(monitors))):
+        m =monitors[i]
+        if cX > m['pos_x']-5 and\
+           cY > m['pos_y']-5:
+            cMonId = i
+            break;
+    m = monitors[cMonId]
+    if debug:
+        print "Current Monitor ID: ", cMonId
+    return cMonId,m
+
 def within_leway(w):
     global cW
     global leway_percentage
@@ -138,10 +140,8 @@ def within_leway(w):
     else:
         return False
 
-
 def is_active_window_maximized():
     return False
-
     
 def maximize():
     unmaximize()
@@ -178,7 +178,7 @@ def move_active(x,y,w,h):
     unmaximize()
 
     if debug:
-        print x, y, w, h
+        print "move to: ", x, y, w, h
 
     # Sanity check, make sure bottom of window does not end up hidden
     if (y+h) > max_height:
@@ -187,67 +187,11 @@ def move_active(x,y,w,h):
     if debug:
         print x, y, w, h
 
-
-  
     command = "wmctrl -r :ACTIVE: -e 0," + str(int(x)) + "," + str(int(y))+ "," + str(int(w)) + "," + str(int(h))
     os.system(command)
 
     command = "wmctrl -a :ACTIVE: "
     os.system(command)
-
-
-def left(shift = False):
-    for x in reversed(halfpoints):
-        if x < cX-10:
-            break
-
-    if shift:
-        w = max_width/4
-        if within_leway(w):
-            w = w * 3
-    else:
-        if x < xleft:
-            w = xleft/2
-        else:
-            w = xright/2
-
-
-    h = max_height - window_title_height
-    move_active(x, panel_height, w - window_border_width, h)
-    maximize_vert()
-
-def right(shift = False):
-    for x in halfpoints:
-        if x > cX+10:
-            break
-
-    if shift:
-        w = max_width/4
-        x = w * 3
-
-        if within_leway(w):
-            w = w * 3
-    else:
-        if x < xleft:
-            w = xleft/2
-        else:
-            w = xright/2
-
-    h = max_height - window_title_height
-    move_active(x, panel_height, w - window_border_width, h)
-    maximize_vert()
-
-def get_current_monitor():
-    ## determine current monitor
-    cMonId = 0
-    for i in range(len(monitors)):
-        m =monitors[i]
-        if cX > m['pos_x']-5 and cX < m['pos_x'] + m['size_x'] and\
-           cY > m['pos_y']-5 and cY < m['pos_y'] + m['size_y']:
-            cMonId = i
-            break;
-    m = monitors[cMonId]    
-    return cMonId,m
 
 def half(mvright = True):
     """Resize  Window to half, and move it right or left"""
@@ -304,115 +248,95 @@ def down(shift = False):
         y = max_height/2 + window_title_height + window_border_width
         move_active(0, y, w, h)
 
-def next_monitor():
+def next_monitor(reverse=False):
     """
     Moves Window to next monitor
     """
     [id, m] = get_current_monitor()
-    nid = (id+1)%len(monitors)
+    if reverse:
+        nid = (id-1)%len(monitors)
+    else:
+        nid = (id+1)%len(monitors)
     nm = monitors[nid]
 
     xrel = float(cX-m['pos_x'])/m['size_x']
     yrel = float(cY-m['pos_y'])/m['size_y']
-    x = xrel * nm['size_x'] + nm['pos_x']
+    x = max(xrel * nm['size_x'] + nm['pos_x'], nm['pos_x'])
     y = yrel * nm['size_y'] + nm['pos_y']
     w = cW * nm['size_x']/m['size_x']
     h = cH * nm['size_y']/m['size_y']
 
     move_active(x,y,w,h)
-
-    if cMv:
+    
+    if cMv and cMh:
+        maximize()
+    elif cMv:
         maximize_vert()
-    if cMh:
-        maximize_horz()
-
-#TODO remove
-def other_monitor():
-    if cX < xleft-5: # on left screen
-        xrel = float(cX-zero_xleft)/(xleft)
-        yrel = float(cY-zero_yleft)/(yleft)
-        x = zero_xright + xrel * xright
-        y = zero_yright + yrel * yright
-        w = cW * xright/xleft
-        h = cH * yright/yleft
-        # if next to boarder set on boarder
-        if cX-zero_xleft < 5:
-            x = zero_xright
-
-    else: #right screen
-        xrel = float(cX-zero_xright)/(xright)
-        yrel = float(cY-zero_yright)/(yright)
-        x = zero_xleft + xrel * xleft
-        y = zero_yleft + yrel * yleft
-        w = cW * xleft/xright
-        h = cH * yleft/yright
-        # if next to boarder set on boarder
-        if cX-zero_xright < 5:
-            x = zero_xleft
-            
-    move_active(x,y,w,h)
-
-    if cMv:
-        maximize_vert()
-    if cMh:
+    elif cMh:
         maximize_horz()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='tool to move windows')
+    parser.add_argument('-v', action='store_true', default=False, 
+                        help="Verbose: Enables debug output" )
     subparsers = parser.add_subparsers()
     sub = subparsers.add_parser('half-left', help='resize window to half to the left')
     sub.set_defaults(func=lambda:half(False))
     sub = subparsers.add_parser('half-right',  help='resize window to half to the right')
     sub.set_defaults(func=lambda:half(True))
-    sub = subparsers.add_parser('next', help='moves window to other monitor')
+    sub = subparsers.add_parser('next', help='moves window to next monitor')
     sub.set_defaults(func=next_monitor)
+    sub = subparsers.add_parser('prev', help='moves window to prev monitor')
+    sub.set_defaults(func=lambda:next_monitor(reverse=True))
 
     
     args = parser.parse_args()
-    print args
+    debug=args.v
+    if debug:
+        print "args: ", args
     args.func()
     exit(0)
     # parser.add_argument('cmd', type=str, nargs=1,
     #                help='command')
 
-    # args = parser.parse_args()
-    cmd = sys.argv[1]
-    #import ipdb;ipdb.set_trace()
-    if cmd == 'left':
-        left()
+    # # args = parser.parse_args()
+    # cmd = sys.argv[1]
+    # #import ipdb;ipdb.set_trace()
+    # if cmd == 'left':
+    #     left()
 
-    elif cmd == 'right':
-        right()
+    # elif cmd == 'right':
+    #     right()
     
-    elif cmd in ('shift-left', 'left-shift'):
-        left(True)
+    # elif cmd in ('shift-left', 'left-shift'):
+    #     left(True)
     
-    elif cmd in ('shift-right', 'right-shift'):
-        right(True)
+    # elif cmd in ('shift-right', 'right-shift'):
+    #     right(True)
     
-    elif cmd in ('top', 'up'):
-        up()
+    # elif cmd in ('top', 'up'):
+    #     up()
 
-    elif cmd in ('shift-up', 'up-shift', 'shift-top', 'top-shift'):
-        up(True)
+    # elif cmd in ('shift-up', 'up-shift', 'shift-top', 'top-shift'):
+    #     up(True)
 
-    elif cmd in ('bottom', 'down'):
-        down()
+    # elif cmd in ('bottom', 'down'):
+    #     down()
 
-    elif cmd in ('shift-down', 'down-shift', 'shift-bottom', 'bottom-shift'):
-        down(True)
+    # elif cmd in ('shift-down', 'down-shift', 'shift-bottom', 'bottom-shift'):
+    #     down(True)
 
-    elif cmd in ('other'):
-        other_monitor()
+    # elif cmd in ('other'):
+    #     other_monitor()
 
-    elif cmd in ('max'):
-        maximize()
-    elif cmd in ('unmax'):
-        unmaximize()
-    elif cmd in ('half-right'):
-        half()
-    elif cmd in ('half-left'):
-        half(False)
-    else:
-        print "Unknown command passed:", cmd
+    # elif cmd in ('max'):
+    #     maximize()
+    # elif cmd in ('unmax'):
+    #     unmaximize()
+    # elif cmd in ('half-right'):
+    #     half()
+    # elif cmd in ('half-left'):
+    #     half(False)
+    # else:
+    #     print "Unknown command passed:", cmd
