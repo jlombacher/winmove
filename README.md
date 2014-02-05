@@ -5,7 +5,7 @@ A simpler Python script to add Windows-7 like shortcuts to Linux.
 
 This application relies on wmctrl, ensure you have it installed before use.
 
-    sudo apt-get install wmctrl xdotool
+    sudo apt-get install wmctrl xdotool x11-xserver-utils
 
 Add keyboard shortcuts calling a command from the list below like:
 
