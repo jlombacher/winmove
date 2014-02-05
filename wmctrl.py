@@ -10,7 +10,9 @@
 #
 # MIT License
 #
-# https://github.com/benhutchins/wmctrl
+# https://github.com/jlombacher/wmctrl.git
+#
+# forked from: https://github.com/benhutchins/wmctrl
 
 
 import sys
@@ -33,7 +35,9 @@ def getMonitorConfig():
     
     The list is order by the x position from left to right.
     At the moment no support for "upper" Monitors
-    
+
+    returns a list of dict
+    [ {'size_x': ..., 'size_y': ... , 'pos_x': ..., 'pos_y': ...} ...]
     """
     xrandr_output = commands.getoutput('xrandr').split('\n')
     expr = re.compile('\S+ connected (?P<size_x>\d+)x(?P<size_y>\d+)\+'
@@ -50,6 +54,8 @@ def getMonitorConfig():
 def initialize():
     """
     Get window and desktop information
+
+    return (desktop,width,height, absoluteX, absoluteY, cW, cH, cMh, cMv)
     """
     desk_output = commands.getoutput("wmctrl -d").split("\n")
     desk_list = [line.split()[0] for line in desk_output]
@@ -73,25 +79,6 @@ def initialize():
     relativeY = int(current[6].split(':')[1])
     cW = int(current[7].split(':')[1])
     cH = int(current[8].split(':')[1])
-
-    # Guess the panel height if we can, this has to assume your window is at the top of screen
-    #global panel_height
-    #if panel_height == 0 and (absoluteX - relativeX) > 0:
-    #    panel_height = absoluteX - relativeX
-
-    # this windows list is no longer needed
-#    win_output = commands.getoutput("wmctrl -lG").split("\n")
-#    win_list = {}
-#
-#    for line in win_output:
-#        parts = line.split()
-#        win_id = hex(int(parts[0], 16))
-#        win_list[win_id] = {
-#            'x': line[1],
-#            'y': line[2],
-#            'h': line[3],
-#            'w': line[4],
-#        }
 
     #determine maximized state
     current = commands.getoutput("xwininfo -wm -id $(xdotool getactivewindow)")
@@ -221,7 +208,7 @@ def half(mvright = True):
     maximize_vert()
 
 
-
+#TODO
 def up(shift = False):
     if not shift:
         if is_active_window_maximized():
@@ -234,7 +221,7 @@ def up(shift = False):
         h = max_height/2 - window_title_height - window_border_width
         move_active(0, panel_height, w, h)
  
-
+#TODO
 def down(shift = False):
     if not shift:
         if is_active_window_maximized():
@@ -296,47 +283,3 @@ if __name__ == '__main__':
     if debug:
         print "args: ", args
     args.func()
-    exit(0)
-    # parser.add_argument('cmd', type=str, nargs=1,
-    #                help='command')
-
-    # # args = parser.parse_args()
-    # cmd = sys.argv[1]
-    # #import ipdb;ipdb.set_trace()
-    # if cmd == 'left':
-    #     left()
-
-    # elif cmd == 'right':
-    #     right()
-    
-    # elif cmd in ('shift-left', 'left-shift'):
-    #     left(True)
-    
-    # elif cmd in ('shift-right', 'right-shift'):
-    #     right(True)
-    
-    # elif cmd in ('top', 'up'):
-    #     up()
-
-    # elif cmd in ('shift-up', 'up-shift', 'shift-top', 'top-shift'):
-    #     up(True)
-
-    # elif cmd in ('bottom', 'down'):
-    #     down()
-
-    # elif cmd in ('shift-down', 'down-shift', 'shift-bottom', 'bottom-shift'):
-    #     down(True)
-
-    # elif cmd in ('other'):
-    #     other_monitor()
-
-    # elif cmd in ('max'):
-    #     maximize()
-    # elif cmd in ('unmax'):
-    #     unmaximize()
-    # elif cmd in ('half-right'):
-    #     half()
-    # elif cmd in ('half-left'):
-    #     half(False)
-    # else:
-    #     print "Unknown command passed:", cmd
