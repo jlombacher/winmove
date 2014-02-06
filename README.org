@@ -1,0 +1,21 @@
+* winmove
+
+A simpler Python script to add Windows-7 like shortcuts to Linux.
+
+This application relies on wmctrl, xrandr ensure you have it installed before use.
+
+#+begin_src sh
+    sudo apt-get install wmctrl xdotool x11-xserver-utils
+#+end_src
+
+Add keyboard shortcuts calling a command from the list below like:
+
+#+begin_src sh
+    python wmctrl.py half-left
+#+end_src
+
+Available commands are:
+          /half-left/, /half-right/, /next/, /prev/
+
+See python /wmctrl.py -h/ for help
+
