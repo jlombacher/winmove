@@ -276,6 +276,11 @@ if __name__ == '__main__':
     sub.set_defaults(func=next_monitor)
     sub = subparsers.add_parser('prev', help='moves window to prev monitor')
     sub.set_defaults(func=lambda:next_monitor(reverse=True))
+    sub = subparsers.add_parser('max', help='maximize window')
+    sub.set_defaults(func=maximize)
+    sub = subparsers.add_parser('unmax', help='unmaximize window')
+    sub.set_defaults(func=unmaximize)
+
 
     
     args = parser.parse_args()
