@@ -96,10 +96,6 @@ monitors = getMonitorConfig()
 max_width = int(max_width)
 max_height = int(max_height)
 
-if debug:
-    print {'junk': junk, 'max_width': max_width, 'max_height': max_height, 
-           'cX': cX, 'cY': cY, 'cW': cW, 'cH': cH, 'cMh': cMh, 'cMv': cMv}
-    print monitors
 def get_current_monitor():
     """
     Determines monitor of current window
@@ -192,12 +188,12 @@ def half(mvright = True):
         else:
             m = monitors[cMonId+1]
             x = m['pos_x']
-    else:
-        if cX >= (m['pos_x'] + m['size_x']/4) or 0 == cMonId:
+    else: 
+        if (cX >= (m['pos_x'] + m['size_x']/4) or 0 == cMonId) and cX < (m['pos_x'] + m['size_x']*3/4) :
             # move to left half
             x = m['pos_x']
         else:
-            m = monitors[cMonId-1]
+            m = monitors[max(cMonId-1,0)]
             x = m['pos_x'] + m['size_x']/2
         
     y = m['pos_y']
@@ -287,4 +283,8 @@ if __name__ == '__main__':
     debug=args.v
     if debug:
         print "args: ", args
+        print {'junk': junk, 'max_width': max_width, 'max_height': max_height, 
+               'cX': cX, 'cY': cY, 'cW': cW, 'cH': cH, 'cMh': cMh, 'cMv': cMv}
+        print monitors
+
     args.func()
