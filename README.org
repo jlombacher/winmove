@@ -11,11 +11,11 @@ This application relies on wmctrl, xrandr ensure you have it installed before us
 Add keyboard shortcuts calling a command from the list below like:
 
 #+begin_src sh
-    python wmctrl.py half-left
+    python winmove.py half-left
 #+end_src
 
 Available commands are:
           /half-left/, /half-right/, /next/, /prev/
 
-See python /wmctrl.py -h/ for help
+See python /winmove.py -h/ for help
 
