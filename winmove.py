@@ -186,14 +186,14 @@ def half(mvright = True):
     [cMonId, m] = get_current_monitor()
 
     if mvright:
-        if cX < (m['pos_x'] + m['size_x']/2) or (len(monitors) - 1) == cMonId:
+        if cX < (m['pos_x'] + m['size_x']/4) or (len(monitors) - 1) == cMonId:
             # move to rigth half
             x = m['pos_x'] + m['size_x']/2
         else:
             m = monitors[cMonId+1]
             x = m['pos_x']
     else:
-        if cX >= (m['pos_x'] + m['size_x']/2) or 0 == cMonId:
+        if cX >= (m['pos_x'] + m['size_x']/4) or 0 == cMonId:
             # move to left half
             x = m['pos_x']
         else:
