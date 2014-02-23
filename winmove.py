@@ -40,7 +40,7 @@ def getMonitorConfig():
     [ {'size_x': ..., 'size_y': ... , 'pos_x': ..., 'pos_y': ...} ...]
     """
     xrandr_output = commands.getoutput('xrandr').split('\n')
-    expr = re.compile('\S+ connected .*(?P<size_x>\d+)x(?P<size_y>\d+)\+'
+    expr = re.compile('\S+ connected.* (?P<size_x>\d+)x(?P<size_y>\d+)\+'
                       '(?P<pos_x>\d+)\+(?P<pos_y>\d+).*')
     mon = [m.groupdict() for m in [expr.match(l) for l in xrandr_output]
            if m is not  None]
