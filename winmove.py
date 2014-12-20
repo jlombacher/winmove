@@ -20,6 +20,7 @@ import subprocess
 import re
 import argparse
 import locale
+import bisect
 
 # Customizable variables
 window_title_height = 0#21
@@ -189,61 +190,65 @@ def move_active(x,y,w,h):
     command = "wmctrl -a :ACTIVE: "
     os.system(command)
 
-def half(mvright = True, fraction = 2):
+def move(direction = 'right', fraction = 2):
     """Resize  Window to half, and move it right or left"""
 
     [cMonId, m] = get_current_monitor()
 
-    if mvright:
-        if cX < (m['pos_x'] + m['size_x']/4) or (len(monitors) - 1) == cMonId:
-            # move to rigth half
-            x = m['pos_x'] + m['size_x']/2
-        else:
-            m = monitors[cMonId+1]
-            x = m['pos_x']
+    if direction == 'right' or direction == 'left':
+        horizontal = True
+        oldVal = cX
+        pos = 'pos_x'
+        size = 'size_x'
+        lowerBound = 'left'
+        upperBound = 'right'
     else:
-        if cX >= (m['pos_x'] + m['size_x']/4) or 0 == cMonId:
-            # move to left half
-            x = m['pos_x']
-        else:
-            m = monitors[cMonId-1]
-            x = m['pos_x'] + m['size_x']/2
-        
-    y = m['pos_y']
-    w = m['size_x']/2
-    h = m['size_y'] - window_title_height
+        horizontal = False
+        oldVal = cY
+        pos = 'pos_y'
+        size = 'size_y'
+        lowerBound = 'up'
+        upperBound = 'down'
 
-    move_active(x, panel_height, w - window_border_width, h)
-    maximize_vert()
+    
+    binboundaries = [];
+    for monitor in monitors:
+        for i in range(fraction):
+            binboundaries.append(monitor[pos] + round(i * monitor[size] / fraction))
+    
+    if direction == upperBound:
+        calcbin = bisect.bisect_right(binboundaries, oldVal + 20)
+        binidx = min(calcbin, len(binboundaries)-1);
+    elif direction == lowerBound:
+        calcbin = bisect.bisect_left(binboundaries, oldVal - 20) - 1;
+        binidx = max(calcbin, 0);
 
+    newVal = binboundaries[binidx];
 
-#TODO
-def up(shift = False):
-    if not shift:
-        if is_active_window_maximized():
-            unmaximize()
-        else:
-            maximize()
-
+    if debug:
+        print('newVal: ')
+        print(newVal)
+        print('calcbin: ')
+        print(calcbin)
+        print('Boundaries: ')
+        print(binboundaries)
+    
+    
+    if horizontal:
+        x = newVal
+        y = m['pos_y']
+        w = m['size_x']/fraction - window_border_width
+        h = m['size_y'] - window_title_height
+        move_active(x, panel_height, w, h)
+        #maximize_vert()
     else:
-        w = max_width - window_border_width
-        h = max_height/2 - window_title_height - window_border_width
-        move_active(0, panel_height, w, h)
- 
-#TODO
-def down(shift = False):
-    if not shift:
-        if is_active_window_maximized():
-            unmaximize()
-        else:
-            minimize()
-
-    if shift:
-        w = max_width - window_border_width
-        h = max_height/2 - window_title_height - window_border_width
-        y = max_height/2 + window_title_height + window_border_width
-        move_active(0, y, w, h)
-
+        x = m['pos_x']
+        y = newVal
+        w = m['size_x'] - window_border_width
+        h = m['size_y']/fraction
+        move_active(x, y, w, h)
+        maximize_horz()
+    
 def next_monitor(reverse=False):
     """
     Moves Window to next monitor
@@ -271,29 +276,44 @@ def next_monitor(reverse=False):
     elif cMh:
         maximize_horz()
 
+def maxFun(args):
+    if (args.unmaximize):
+        unmaximize()
+    else:
+        maximize()
 
+def smonFun(args):
+    if(args.direction == 'next'):
+        next_monitor()
+    elif(args.direction == 'prev'):
+        next_monitor(reverse=True)
+
+def moveFun(args):
+    move(args.direction, args.fraction)
+            
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Small tool to move and tile the current windows. Use it by registering shortcuts.')
-    parser.add_argument('-v', action='store_true', default=False, 
-                        help="Verbose: Enables debug output" )
-    subparsers = parser.add_subparsers()
-    sub = subparsers.add_parser('half-left', help='resize window to half to the left')
-    sub.set_defaults(func=lambda:half(False))
-    sub = subparsers.add_parser('half-right',  help='resize window to half to the right')
-    sub.set_defaults(func=lambda:half(True))
-    sub = subparsers.add_parser('next', help='moves window to next monitor')
-    sub.set_defaults(func=next_monitor)
-    sub = subparsers.add_parser('prev', help='moves window to prev monitor')
-    sub.set_defaults(func=lambda:next_monitor(reverse=True))
-    sub = subparsers.add_parser('max', help='maximize window')
-    sub.set_defaults(func=maximize)
-    sub = subparsers.add_parser('unmax', help='unmaximize window')
-    sub.set_defaults(func=unmaximize)
+    parser = argparse.ArgumentParser(prog='winmove', description='Small tool to move and tile the current windows. Use it by registering shortcuts.')
+    parser.add_argument('--verbose','-v', action='store_true', default=False, 
+                        help="Verbose: Enable debug output" )
 
+    subparsers = parser.add_subparsers();
 
+    sub = subparsers.add_parser('move', help='Moves the window horizotally while maximizing it vertically')
+    sub.add_argument('--direction', '-d', choices=['left', 'right', 'up', 'down'], default='right', help="Movement direction")
+    sub.add_argument('--fraction', '-f', choices=[2, 3, 4, 5, 6, 7, 8], type=int, default=2, help="Width/Height of window  resized to 1/FRACTION")
+    sub.set_defaults(func=moveFun)
+      
+    sub = subparsers.add_parser('smon', help='Switches window to other monitors')
+    sub.add_argument('--direction', '-d', choices=['next', 'prev'], default='next', help='Selects the monitor to switch to')
+    sub.set_defaults(func=smonFun)
     
+    sub = subparsers.add_parser('max', help='(Un-)Maximizes window')
+    sub.add_argument('--unmaximize', '-u', help='Unmaximize', action='store_true', default=False)
+    sub.set_defaults(func=maxFun)
+        
     args = parser.parse_args()
-    debug=args.v
+    debug=args.verbose
     if debug:
-        print("args: ", args)
-    args.func()
+        print("Arguments: ", args)
+        
+    args.func(args)
