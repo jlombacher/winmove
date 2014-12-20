@@ -1,15 +1,38 @@
 wmctrl.py
 ======
 
-A simpler Python script to add Windows-7 like shortcuts to Linux.
+A simple Python script to add some basic tiling support to Linux.
+This is useful for example for old XFCE installations without tiling.
+
+The fraction based resizing of the window is especially useful for big wide-screen displays (21:9).
 
 This application relies on wmctrl, ensure you have it installed before use.
 
+For Debian-based distros use:
     sudo apt-get install wmctrl xdotool x11-xserver-utils
+
+For Arch linux use:
+   sudo pacman -S wmctrl xorg-utils xdotool
 
 Add keyboard shortcuts calling a command from the list below like:
 
-    python wmctrl.py left
+Get help:
+    python winmove.py --help
+    python winmove.py move --help
+    
+Resize active window to one half of the current screen:
+    python winmove.py move --direction left
+    python winmove.py move --direction down
+    
+Resize active window to one fourth of the current screen:
+    python winmove.py move --direction up --fraction 4
+    
+Maximize and unmaximize the active window:
+    python winmove.py max
+    python winmove.py max --unmaximize
+
+Move window to other next screen:
+    python winmove.py smon --direction next
 
 Available commands are:
 
