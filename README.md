@@ -1,4 +1,4 @@
-wmctrl.py
+winmove.py
 ======
 
 A simple Python script to add some basic tiling support to Linux.
@@ -41,15 +41,15 @@ Move window to other next screen:
 
     python winmove.py smon --direction next
 
-Available commands are:
+Recommended shortcuts are: (Super is the "windows key". Mnemonic: "shift window to the left" => Shift+Windows+Left)
 
-    command           | description                                                   | recommended shortcut
+    Description                                                   | Recommended shortcut
     --------------------------------------------------------------------------------------------------------
-    left                Position active window on the left-half of your desktop.        Super+Left
-    right               Position active window on the right-half of your desktop        Super+Right
-    up                  Toggle maximized state of active window (TODO)                  Super+Up
-    down                Demaximize window if maximized, if not, minimize window.        Super+Down
-    shift-left          Position window to take up 1/3 or 2/3 of desktop on left.       Super+Shift+Left
-    shift-right         Position window to take up 1/3 or 2/3 of desktop on right.      Super+Shift+Right
-    shift-up            Position a window to take up 1/2 of desktop on top.             Super+Shift+Up
-    shift-down          Position a window to take up 1/2 of desktop on bottom.          Super+Shift+Down
+    Position active window on the left-half of your desktop.        Super+Shift+Left
+    Position active window on the right-half of your desktop        Super+Shift+Right
+    Position active window on the upper-half of your desktop.       Super+Shift+Up
+    Position active window on the lower-half of your desktop.       Super+Shift+Down
+    Move to next screen                                             Super+Shift+n
+    Move to previous screen                                         Super+Shift+p
+    Maximize window.                                                Super+Up
+    Unmaximize window.                                              Super+Down
