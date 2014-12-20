@@ -2,11 +2,11 @@
 #
 # wmctrl.py
 #
-# developed by Benjamin Hutchins and Ryan Stringham
+# * developed by Benjamin Hutchins and Ryan Stringham
+# * forked and edited by Jakob Lombacher
+#   an attempt to make linux more usable.
+# * forked and edited by Markus Schuetz to allow some more options
 #
-# forked and edited by Jakob Lombacher
-#
-# an attempt to make linux more usable.
 #
 # MIT License
 #
@@ -14,12 +14,12 @@
 #
 # forked from: https://github.com/benhutchins/wmctrl
 
-
 import sys
 import os
-import commands
+import subprocess
 import re
 import argparse
+import locale
 
 # Customizable variables
 window_title_height = 0#21
@@ -28,6 +28,12 @@ panel_height = 30
 leway_percentage = .05
 
 debug = False
+encoding = locale.getdefaultlocale()[1]
+
+def getCommandOutput(command):
+    output =  subprocess.check_output(command, shell=True).decode(encoding)[0:-1]
+    return output
+
 
 def getMonitorConfig():
     """ 
@@ -39,17 +45,18 @@ def getMonitorConfig():
     returns a list of dict
     [ {'size_x': ..., 'size_y': ... , 'pos_x': ..., 'pos_y': ...} ...]
     """
-    xrandr_output = commands.getoutput('xrandr').split('\n')
+    xrandr_output = getCommandOutput('xrandr').split('\n')
     expr = re.compile('\S+ connected (?P<size_x>\d+)x(?P<size_y>\d+)\+'
                       '(?P<pos_x>\d+)\+(?P<pos_y>\d+).*')
     mon = [m.groupdict() for m in [expr.match(l) for l in xrandr_output]
-           if m is not  None]
+           if m is not None]
 
     for m in mon:
         for k in m.keys():
             m[k] = int(m[k])
-    mon.sort(key=lambda x:  x['pos_x']  )
+    mon.sort(key=lambda x:  x['pos_x'])
     return mon
+
 
 def initialize():
     """
@@ -57,22 +64,22 @@ def initialize():
 
     return (desktop,width,height, absoluteX, absoluteY, cW, cH, cMh, cMv)
     """
-    desk_output = commands.getoutput("wmctrl -d").split("\n")
-    desk_list = [line.split()[0] for line in desk_output]
+    desk_output = getCommandOutput("wmctrl -d").split("\n")
+    #desk_list = [line.split()[0] for line in desk_output]
 
-    current =  filter(lambda x: x.split()[1] == "*" , desk_output)[0].split()
+    current =  next(filter(lambda x: x.split()[1] == "*" , desk_output)).split()
 
     desktop = current[0]
-    width =  current[8].split("x")[0]
-    height =  current[8].split("x")[1]
-    orig_x =  current[7].split(",")[0]
-    orig_y =  current[7].split(",")[1]
+    width  = current[8].split("x")[0]
+    height = current[8].split("x")[1]
+    orig_x = current[7].split(",")[0]
+    orig_y = current[7].split(",")[1]
 
     # this is unreliable, xdpyinfo often does not know what is focused, we use xdotool now
     #window_id = commands.getoutput("xdpyinfo | grep focus | grep -E -o 0x[0-9a-f]+").strip()
     #window_id = hex(int(window_id, 16))
 
-    current = commands.getoutput("xwininfo -id $(xdotool getactivewindow)").split("\n")
+    current = getCommandOutput("xwininfo -id $(xdotool getactivewindow)").split("\n")
     absoluteX = int(current[3].split(':')[1])
     absoluteY = int(current[4].split(':')[1])
     relativeX = int(current[5].split(':')[1])
@@ -81,13 +88,13 @@ def initialize():
     cH = int(current[8].split(':')[1])
 
     #determine maximized state
-    current = commands.getoutput("xwininfo -wm -id $(xdotool getactivewindow)")
+    current = getCommandOutput("xwininfo -wm -id $(xdotool getactivewindow)")
     cMh = current.find('Maximized Horz') >= 0
     cMv = current.find('Maximized Vert') >= 0
     #Korrekturfaktor, warum auch immer
     absoluteX -= 1
     absoluteY -= 22
-    return (desktop,width,height, absoluteX, absoluteY, cW, cH, cMh, cMv)
+    return (desktop, width, height, absoluteX, absoluteY, cW, cH, cMh, cMv)
 
 
 # calculate these
@@ -97,9 +104,11 @@ max_width = int(max_width)
 max_height = int(max_height)
 
 if debug:
-    print {'junk': junk, 'max_width': max_width, 'max_height': max_height, 
-           'cX': cX, 'cY': cY, 'cW': cW, 'cH': cH, 'cMh': cMh, 'cMv': cMv}
-    print monitors
+    print({'junk': junk, 'max_width': max_width, 'max_height': max_height,
+           'cX': cX, 'cY': cY, 'cW': cW, 'cH': cH, 'cMh': cMh, 'cMv': cMv})
+    print(monitors)
+
+
 def get_current_monitor():
     """
     Determines monitor of current window
@@ -113,8 +122,8 @@ def get_current_monitor():
             break;
     m = monitors[cMonId]
     if debug:
-        print "Current Monitor ID: ", cMonId
-    return cMonId,m
+        print("Current Monitor ID: ", cMonId)
+    return cMonId, m
 
 def within_leway(w):
     global cW
@@ -165,14 +174,14 @@ def move_active(x,y,w,h):
     unmaximize()
 
     if debug:
-        print "move to: ", x, y, w, h
+        print("move to: ", x, y, w, h)
 
     # Sanity check, make sure bottom of window does not end up hidden
     if (y+h) > max_height:
         h = max_height - y
 
     if debug:
-        print x, y, w, h
+        print(x, y, w, h)
 
     command = "wmctrl -r :ACTIVE: -e 0," + str(int(x)) + "," + str(int(y))+ "," + str(int(w)) + "," + str(int(h))
     os.system(command)
@@ -180,7 +189,7 @@ def move_active(x,y,w,h):
     command = "wmctrl -a :ACTIVE: "
     os.system(command)
 
-def half(mvright = True):
+def half(mvright = True, fraction = 2):
     """Resize  Window to half, and move it right or left"""
 
     [cMonId, m] = get_current_monitor()
@@ -264,7 +273,7 @@ def next_monitor(reverse=False):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='tool to move windows')
+    parser = argparse.ArgumentParser(description='Small tool to move and tile the current windows. Use it by registering shortcuts.')
     parser.add_argument('-v', action='store_true', default=False, 
                         help="Verbose: Enables debug output" )
     subparsers = parser.add_subparsers()
@@ -286,5 +295,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     debug=args.v
     if debug:
-        print "args: ", args
+        print("args: ", args)
     args.func()
