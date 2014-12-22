@@ -207,9 +207,11 @@ def move(direction = 'right', fraction = 2):
 
 
     binboundaries = [];
+    boundaryMonitor = [];
     for monitor in monitors:
         for i in range(fraction):
             binboundaries.append(monitor[pos] + round(i * monitor[size] / fraction))
+            boundaryMonitor.append(monitor)
 
     if direction == upperBound:
         calcbin = bisect.bisect_right(binboundaries, oldVal + 20)
@@ -219,6 +221,7 @@ def move(direction = 'right', fraction = 2):
         binidx = max(calcbin, 0);
 
     newVal = binboundaries[binidx];
+    m = boundaryMonitor[binidx]
 
     if debug:
         print('newVal: ')
