@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 #
 # wmctrl.py
 #
@@ -31,15 +31,16 @@ leway_percentage = .05
 debug = False
 encoding = locale.getdefaultlocale()[1]
 
+
 def getCommandOutput(command):
     output =  subprocess.check_output(command, shell=True).decode(encoding)[0:-1]
     return output
 
 
 def getMonitorConfig():
-    """ 
+    """
     Returns ordered list of Monitor configuration as dict.
-    
+
     The list is order by the x position from left to right.
     At the moment no support for "upper" Monitors
 
@@ -104,12 +105,6 @@ monitors = getMonitorConfig()
 max_width = int(max_width)
 max_height = int(max_height)
 
-if debug:
-    print({'junk': junk, 'max_width': max_width, 'max_height': max_height,
-           'cX': cX, 'cY': cY, 'cW': cW, 'cH': cH, 'cMh': cMh, 'cMv': cMv})
-    print(monitors)
-
-
 def get_current_monitor():
     """
     Determines monitor of current window
@@ -139,7 +134,7 @@ def within_leway(w):
 
 def is_active_window_maximized():
     return False
-    
+
 def maximize():
     unmaximize()
 
@@ -210,12 +205,12 @@ def move(direction = 'right', fraction = 2):
         lowerBound = 'up'
         upperBound = 'down'
 
-    
+
     binboundaries = [];
     for monitor in monitors:
         for i in range(fraction):
             binboundaries.append(monitor[pos] + round(i * monitor[size] / fraction))
-    
+
     if direction == upperBound:
         calcbin = bisect.bisect_right(binboundaries, oldVal + 20)
         binidx = min(calcbin, len(binboundaries)-1);
@@ -232,15 +227,15 @@ def move(direction = 'right', fraction = 2):
         print(calcbin)
         print('Boundaries: ')
         print(binboundaries)
-    
-    
+
+
     if horizontal:
         x = newVal
         y = m['pos_y']
         w = m['size_x']/fraction - window_border_width
         h = m['size_y'] - window_title_height
         move_active(x, panel_height, w, h)
-        #maximize_vert()
+        maximize_vert()
     else:
         x = m['pos_x']
         y = newVal
@@ -248,7 +243,7 @@ def move(direction = 'right', fraction = 2):
         h = m['size_y']/fraction
         move_active(x, y, w, h)
         maximize_horz()
-    
+
 def next_monitor(reverse=False):
     """
     Moves Window to next monitor
@@ -268,7 +263,7 @@ def next_monitor(reverse=False):
     h = cH * nm['size_y']/m['size_y']
 
     move_active(x,y,w,h)
-    
+
     if cMv and cMh:
         maximize()
     elif cMv:
@@ -290,10 +285,10 @@ def smonFun(args):
 
 def moveFun(args):
     move(args.direction, args.fraction)
-            
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='winmove', description='Small tool to move and tile the current windows. Use it by registering shortcuts.')
-    parser.add_argument('--verbose','-v', action='store_true', default=False, 
+    parser.add_argument('--verbose','-v', action='store_true', default=False,
                         help="Verbose: Enable debug output" )
 
     subparsers = parser.add_subparsers();
@@ -302,18 +297,21 @@ if __name__ == '__main__':
     sub.add_argument('--direction', '-d', choices=['left', 'right', 'up', 'down'], default='right', help="Movement direction")
     sub.add_argument('--fraction', '-f', choices=[2, 3, 4, 5, 6, 7, 8], type=int, default=2, help="Width/Height of window  resized to 1/FRACTION")
     sub.set_defaults(func=moveFun)
-      
+
     sub = subparsers.add_parser('smon', help='Switches window to other monitors')
     sub.add_argument('--direction', '-d', choices=['next', 'prev'], default='next', help='Selects the monitor to switch to')
     sub.set_defaults(func=smonFun)
-    
+
     sub = subparsers.add_parser('max', help='(Un-)Maximizes window')
     sub.add_argument('--unmaximize', '-u', help='Unmaximize', action='store_true', default=False)
     sub.set_defaults(func=maxFun)
-        
+
     args = parser.parse_args()
-    debug=args.verbose
+    debug = args.verbose
     if debug:
-        print("Arguments: ", args)
-        
+        print ("Arguments: ", args)
+        print ({'junk': junk, 'max_width': max_width, 'max_height': max_height,
+               'cX': cX, 'cY': cY, 'cW': cW, 'cH': cH, 'cMh': cMh, 'cMv': cMv})
+        print (monitors)
+
     args.func(args)

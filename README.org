@@ -1,5 +1,4 @@
-winmove.py
-======
+* winmove
 
 A simple Python script to add some basic tiling support to Linux.
 This is useful for example for old XFCE installations without tiling.
@@ -10,36 +9,44 @@ This application relies on wmctrl, ensure you have it installed before use.
 
 For Debian-based distros use:
 
+#+begin_src sh
     sudo apt-get install wmctrl xdotool x11-xserver-utils
+#+end_src
 
 For Arch linux use:
-
+#+begin_src sh
     sudo pacman -S wmctrl xorg-utils xdotool
-
-Add keyboard shortcuts calling a command from the list below like:
+#+end_src
 
 Get help:
-
+#+begin_src sh
     python winmove.py --help
     python winmove.py move --help
+#+end_src
+
+Add keyboard shortcuts calling a command from the list below like:
     
 Resize active window to one half of the current screen:
-
+#+begin_src sh
     python winmove.py move --direction left
     python winmove.py move --direction down
+#+end_src
     
 Resize active window to one fourth of the current screen:
-
+#+begin_src sh
     python winmove.py move --direction up --fraction 4
+#+end_src
     
 Maximize and unmaximize the active window:
-
+#+begin_src sh
     python winmove.py max
     python winmove.py max --unmaximize
+#+end_src
 
 Move window to other next screen:
-
+#+begin_src sh
     python winmove.py smon --direction next
+#+end_src
 
 Recommended shortcuts are: (Super is the "windows key". Mnemonic: "shift window to the left" => Shift+Windows+Left)
 
@@ -53,3 +60,4 @@ Recommended shortcuts are: (Super is the "windows key". Mnemonic: "shift window 
     Move to previous screen                                         Super+Shift+p
     Maximize window.                                                Super+Up
     Unmaximize window.                                              Super+Down
+
